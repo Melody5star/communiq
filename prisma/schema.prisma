@@ -1,0 +1,173 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Tenant {
+  id           String        @id @default(uuid())
+  name         String
+  slug         String        @unique
+  plan         String        @default("free")
+  customDomain String?
+  primaryColor String        @default("#6366f1")
+  createdAt    DateTime      @default(now())
+  members      Member[]
+  spaces       Space[]
+  posts        Post[]
+  comments     Comment[]
+  notifications Notification[]
+  modQueue     ModQueue[]
+  activityLogs ActivityLog[]
+  tags         Tag[]
+}
+
+model Member {
+  id           String         @id @default(uuid())
+  tenantId     String
+  email        String
+  displayName  String
+  avatarUrl    String?
+  role         String         @default("member")
+  region       String         @default("us-east-1")
+  joinedAt     DateTime       @default(now())
+  isBanned     Boolean        @default(false)
+  tenant       Tenant         @relation(fields: [tenantId], references: [id])
+  posts        Post[]
+  comments     Comment[]
+  reactions    Reaction[]
+  following    Follow[]       @relation("follower")
+  followers    Follow[]       @relation("following")
+  notifications Notification[]
+  activityLogs  ActivityLog[]
+  @@unique([tenantId, email])
+}
+
+model Space {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  slug        String
+  description String?
+  isPrivate   Boolean  @default(false)
+  postCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  posts       Post[]
+  @@unique([tenantId, slug])
+}
+
+model Post {
+  id        String    @id @default(uuid())
+  tenantId  String
+  spaceId   String
+  authorId  String
+  title     String
+  body      String
+  postType  String    @default("discussion")
+  upvotes   Int       @default(0)
+  isPinned  Boolean   @default(false)
+  isSolved  Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  space     Space     @relation(fields: [spaceId], references: [id])
+  author    Member    @relation(fields: [authorId], references: [id])
+  comments  Comment[]
+  postTags  PostTag[]
+}
+
+model Comment {
+  id        String    @id @default(uuid())
+  tenantId  String
+  postId    String
+  parentId  String?
+  authorId  String
+  body      String
+  upvotes   Int       @default(0)
+  isAnswer  Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  post      Post      @relation(fields: [postId], references: [id])
+  parent    Comment?  @relation("thread", fields: [parentId], references: [id])
+  replies   Comment[] @relation("thread")
+  author    Member    @relation(fields: [authorId], references: [id])
+}
+
+model Reaction {
+  id         String   @id @default(uuid())
+  entityType String
+  entityId   String
+  memberId   String
+  reaction   String
+  createdAt  DateTime @default(now())
+  member     Member   @relation(fields: [memberId], references: [id])
+  @@unique([entityId, memberId, reaction])
+}
+
+model Follow {
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  follower    Member   @relation("follower", fields: [followerId], references: [id])
+  following   Member   @relation("following", fields: [followingId], references: [id])
+  @@id([followerId, followingId])
+}
+
+model Tag {
+  id       String    @id @default(uuid())
+  tenantId String
+  name     String
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  postTags PostTag[]
+  @@unique([tenantId, name])
+}
+
+model PostTag {
+  postId String
+  tagId  String
+  post   Post @relation(fields: [postId], references: [id])
+  tag    Tag  @relation(fields: [tagId], references: [id])
+  @@id([postId, tagId])
+}
+
+model ModQueue {
+  id         String   @id @default(uuid())
+  tenantId   String
+  entityType String
+  entityId   String
+  reporterId String
+  reason     String?
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  memberId   String
+  tenantId   String
+  type       String
+  entityType String
+  entityId   String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  member     Member   @relation(fields: [memberId], references: [id])
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  tenantId  String
+  memberId  String
+  action    String
+  oldValue  Json?
+  newValue  Json?
+  region    String
+  createdAt DateTime @default(now())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  member    Member   @relation(fields: [memberId], references: [id])
+}

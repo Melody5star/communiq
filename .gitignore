@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma
+
+# AWS CLI installer (not part of project)
+/aws/
+awscliv2.zip
+
+# Sensitive credentials
+communiq-config.txt
