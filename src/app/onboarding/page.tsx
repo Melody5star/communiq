@@ -42,7 +42,7 @@ export default function OnboardingPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Something went wrong"); setLoading(false); return; }
+      if (!res.ok) { setError((data.detail || data.error || "Something went wrong")); setLoading(false); return; }
 
       await signIn("credentials", { email: form.email, redirect: false });
       router.push(`/t/${form.slug}`);

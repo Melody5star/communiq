@@ -37,7 +37,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, slug });
   } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
     console.error("Onboarding error:", err);
-    return NextResponse.json({ error: "Failed to create community" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create community", detail: message }, { status: 500 });
   }
 }
