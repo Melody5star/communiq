@@ -7,12 +7,7 @@ const DSQL_HOST = process.env.DSQL_HOST ?? "srt2xwnlrf5qxdg7ffcdxzkrum.dsql.us-e
 const DSQL_REGION = process.env.DSQL_REGION ?? "us-east-1";
 
 async function createClient(): Promise<PrismaClient> {
-  const credentials = process.env.COMMUNIQ_ACCESS_KEY_ID ? {
-    accessKeyId: process.env.COMMUNIQ_ACCESS_KEY_ID,
-    secretAccessKey: process.env.COMMUNIQ_SECRET_ACCESS_KEY!,
-  } : undefined;
-
-  const signer = new DsqlSigner({ hostname: DSQL_HOST, region: DSQL_REGION, credentials });
+  const signer = new DsqlSigner({ hostname: DSQL_HOST, region: DSQL_REGION });
   const token = await signer.getDbConnectAdminAuthToken();
 
   const pool = new Pool({
