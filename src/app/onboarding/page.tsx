@@ -44,7 +44,12 @@ export default function OnboardingPage() {
       const data = await res.json();
       if (!res.ok) { setError((data.detail || data.error || "Something went wrong")); setLoading(false); return; }
 
-      await signIn("credentials", { email: form.email, redirect: false });
+      const result = await signIn("credentials", { email: form.email, redirect: false });
+      if (result?.error) {
+        setError("Community created! Please sign in at /login with your email.");
+        setLoading(false);
+        return;
+      }
       router.push(`/t/${form.slug}`);
     } catch {
       setError("Something went wrong. Please try again.");
