@@ -4,6 +4,7 @@ const publicPaths = ["/login", "/onboarding", "/api/auth", "/api/onboarding"];
 
 export const authConfig: NextAuthConfig = {
   trustHost: true,
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? "communiq-hackathon-secret-2026",
   pages: { signIn: "/login" },
   providers: [],
   callbacks: {

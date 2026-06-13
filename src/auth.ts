@@ -11,25 +11,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
       },
       authorize: async (credentials) => {
-        const email = credentials?.email as string;
-        if (!email) return null;
+        try {
+          const email = credentials?.email as string;
+          if (!email) return null;
 
-        const db = await getDb();
-        const member = await db.member.findFirst({
-          where: { email },
-          include: { tenant: true },
-        });
+          const db = await getDb();
+          const member = await db.member.findFirst({
+            where: { email },
+            include: { tenant: true },
+          });
 
-        if (!member) return null;
+          if (!member) return null;
 
-        return {
-          id: member.id,
-          email: member.email,
-          name: member.displayName,
-          tenantId: member.tenantId,
-          tenantSlug: member.tenant.slug,
-          role: member.role,
-        };
+          return {
+            id: member.id,
+            email: member.email,
+            name: member.displayName,
+            tenantId: member.tenantId,
+            tenantSlug: member.tenant.slug,
+            role: member.role,
+          };
+        } catch (err) {
+          console.error("authorize error:", err);
+          return null;
+        }
       },
     }),
   ],
