@@ -22,15 +22,18 @@ async function createClient(): Promise<PrismaClient> {
     user: "admin",
     password: token,
     ssl: { rejectUnauthorized: false },
-    max: 10,
+    max: 5,
   });
 
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 }
 
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
+let _client: PrismaClient | undefined;
 
-export const prisma = globalForPrisma.prisma ?? (await createClient());
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+export async function getDb(): Promise<PrismaClient> {
+  if (!_client) {
+    _client = await createClient();
+  }
+  return _client;
+}

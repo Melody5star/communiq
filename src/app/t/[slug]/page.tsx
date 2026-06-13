@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { redirect } from "next/navigation";
 
 export default async function TenantHome({ params }: { params: Promise<{ slug: string }> }) {
@@ -8,12 +8,13 @@ export default async function TenantHome({ params }: { params: Promise<{ slug: s
 
   if (!session) redirect("/login");
 
-  const tenant = await prisma.tenant.findFirst({ where: { slug } });
+  const db = await getDb();
+  const tenant = await db.tenant.findFirst({ where: { slug } });
   if (!tenant) redirect("/login");
 
-  const memberCount = await prisma.member.count({ where: { tenantId: tenant.id } });
-  const postCount = await prisma.post.count({ where: { tenantId: tenant.id } });
-  const spaces = await prisma.space.findMany({ where: { tenantId: tenant.id }, take: 10 });
+  const memberCount = await db.member.count({ where: { tenantId: tenant.id } });
+  const postCount = await db.post.count({ where: { tenantId: tenant.id } });
+  const spaces = await db.space.findMany({ where: { tenantId: tenant.id }, take: 10 });
 
   return (
     <div className="min-h-screen bg-gray-50">

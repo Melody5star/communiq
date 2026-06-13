@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -12,7 +12,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const email = credentials?.email as string;
         if (!email) return null;
 
-        const member = await prisma.member.findFirst({
+        const db = await getDb();
+        const member = await db.member.findFirst({
           where: { email },
           include: { tenant: true },
         });

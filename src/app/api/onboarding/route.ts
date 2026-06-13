@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { randomUUID } from "crypto";
 
 export async function POST(req: NextRequest) {
@@ -10,7 +10,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "All fields required" }, { status: 400 });
     }
 
-    const existing = await prisma.tenant.findFirst({ where: { slug } });
+    const db = await getDb();
+
+    const existing = await db.tenant.findFirst({ where: { slug } });
     if (existing) {
       return NextResponse.json({ error: "That slug is already taken. Try another." }, { status: 409 });
     }
@@ -18,16 +20,11 @@ export async function POST(req: NextRequest) {
     const tenantId = randomUUID();
     const memberId = randomUUID();
 
-    await prisma.tenant.create({
-      data: {
-        id: tenantId,
-        name: communityName,
-        slug,
-        plan: "free",
-      },
+    await db.tenant.create({
+      data: { id: tenantId, name: communityName, slug, plan: "free" },
     });
 
-    await prisma.member.create({
+    await db.member.create({
       data: {
         id: memberId,
         tenantId,
