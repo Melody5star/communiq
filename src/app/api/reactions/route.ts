@@ -11,13 +11,17 @@ export async function POST(req: NextRequest) {
     const { entityType, entityId, reaction } = await req.json();
     if (!entityType || !entityId) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
+    const reactionType = reaction || "upvote";
     const db = await getDb();
     const existing = await db.reaction.findFirst({
-      where: { entityId, memberId: session.user.memberId, reaction: reaction || "upvote" },
+      where: { entityId, memberId: session.user.memberId, reaction: reactionType },
     });
 
     if (existing) {
       await db.reaction.delete({ where: { id: existing.id } });
+      if (entityType === "post") {
+        await db.post.update({ where: { id: entityId }, data: { upvotes: { decrement: 1 } } });
+      }
       return NextResponse.json({ action: "removed" });
     }
 
@@ -27,9 +31,12 @@ export async function POST(req: NextRequest) {
         entityType,
         entityId,
         memberId: session.user.memberId,
-        reaction: reaction || "upvote",
+        reaction: reactionType,
       },
     });
+    if (entityType === "post") {
+      await db.post.update({ where: { id: entityId }, data: { upvotes: { increment: 1 } } });
+    }
     return NextResponse.json({ action: "added" });
   } catch (err) {
     console.error("Reaction error:", err);

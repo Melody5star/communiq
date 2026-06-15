@@ -25,6 +25,11 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    await db.space.update({
+      where: { id: spaceId },
+      data: { postCount: { increment: 1 } },
+    });
+
     return NextResponse.json({ success: true, postId: post.id });
   } catch (err) {
     console.error("Create post error:", err);

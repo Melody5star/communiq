@@ -10,6 +10,17 @@ interface Comment {
   createdAt: string;
 }
 
+function timeAgoClient(iso: string): string {
+  const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+const COLORS = ["bg-indigo-100 text-indigo-600", "bg-purple-100 text-purple-600", "bg-pink-100 text-pink-600", "bg-teal-100 text-teal-600", "bg-orange-100 text-orange-600"];
+
 export default function CommentSection({
   tenantId,
   postId,
@@ -41,7 +52,7 @@ export default function CommentSection({
 
     if (!res.ok) { setError(data.error || "Failed"); return; }
 
-    setComments(prev => [...prev, {
+    setComments((prev) => [...prev, {
       id: data.commentId,
       body,
       authorName: "You",
@@ -52,38 +63,44 @@ export default function CommentSection({
   }
 
   return (
-    <div className="space-y-4">
-      <h2 className="font-semibold text-gray-900">{comments.length} {comments.length === 1 ? "Reply" : "Replies"}</h2>
+    <div className="space-y-3">
+      <h2 className="font-semibold text-gray-900 text-sm uppercase tracking-wide text-gray-500">
+        {comments.length} {comments.length === 1 ? "Reply" : "Replies"}
+      </h2>
 
-      {comments.map(c => (
-        <div key={c.id} className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-xs font-bold">
-              {c.authorName[0].toUpperCase()}
-            </div>
-            <span className="text-sm font-medium text-gray-700">{c.authorName}</span>
-            <span className="text-xs text-gray-400 ml-auto">{new Date(c.createdAt).toLocaleDateString()}</span>
+      {comments.map((c, i) => (
+        <div key={c.id} className="bg-white rounded-xl border border-gray-200 p-4 flex gap-3">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${COLORS[i % COLORS.length]}`}>
+            {c.authorName[0].toUpperCase()}
           </div>
-          <p className="text-sm text-gray-700 whitespace-pre-wrap">{c.body}</p>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline gap-2 mb-1">
+              <span className="text-sm font-semibold text-gray-800">{c.authorName}</span>
+              <span className="text-xs text-gray-400">{timeAgoClient(c.createdAt)}</span>
+            </div>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{c.body}</p>
+          </div>
         </div>
       ))}
 
       <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
         <textarea
           value={body}
-          onChange={e => setBody(e.target.value)}
+          onChange={(e) => setBody(e.target.value)}
           placeholder="Write a reply..."
           rows={3}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+          className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none bg-gray-50 focus:bg-white transition-colors"
         />
         {error && <p className="text-red-500 text-xs">{error}</p>}
-        <button
-          type="submit"
-          disabled={loading || !body.trim()}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
-        >
-          {loading ? "Posting..." : "Reply"}
-        </button>
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={loading || !body.trim()}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+          >
+            {loading ? "Posting..." : "Reply"}
+          </button>
+        </div>
       </form>
     </div>
   );
