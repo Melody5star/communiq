@@ -35,6 +35,17 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Bootstrap with a General space so the community isn't empty
+    await db.space.create({
+      data: {
+        id: randomUUID(),
+        tenantId,
+        name: "General",
+        slug: "general",
+        description: "General discussion",
+      },
+    });
+
     return NextResponse.json({ success: true, slug });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

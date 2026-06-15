@@ -97,6 +97,7 @@ export default async function PostDetail({
         <CommentSection
           tenantId={tenant.id}
           postId={postId}
+          currentUserName={session.user.name ?? "You"}
           comments={comments.map((c) => ({
             id: c.id,
             body: c.body,

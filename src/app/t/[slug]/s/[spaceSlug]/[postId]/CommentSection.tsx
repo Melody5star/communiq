@@ -24,10 +24,12 @@ const COLORS = ["bg-indigo-100 text-indigo-600", "bg-purple-100 text-purple-600"
 export default function CommentSection({
   tenantId,
   postId,
+  currentUserName,
   comments: initial,
 }: {
   tenantId: string;
   postId: string;
+  currentUserName: string;
   comments: Comment[];
 }) {
   const [comments, setComments] = useState(initial);
@@ -55,7 +57,7 @@ export default function CommentSection({
     setComments((prev) => [...prev, {
       id: data.commentId,
       body,
-      authorName: "You",
+      authorName: currentUserName,
       createdAt: new Date().toISOString(),
     }]);
     setBody("");
@@ -64,9 +66,15 @@ export default function CommentSection({
 
   return (
     <div className="space-y-3">
-      <h2 className="font-semibold text-gray-900 text-sm uppercase tracking-wide text-gray-500">
+      <h2 className="font-semibold text-sm uppercase tracking-wide text-gray-400">
         {comments.length} {comments.length === 1 ? "Reply" : "Replies"}
       </h2>
+
+      {comments.length === 0 && (
+        <div className="text-center py-6 text-gray-400 text-sm">
+          No replies yet — be the first to respond!
+        </div>
+      )}
 
       {comments.map((c, i) => (
         <div key={c.id} className="bg-white rounded-xl border border-gray-200 p-4 flex gap-3">
