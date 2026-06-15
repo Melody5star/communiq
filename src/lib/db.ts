@@ -7,7 +7,18 @@ const DSQL_HOST = process.env.DSQL_HOST ?? "srt2xwnlrf5qxdg7ffcdxzkrum.dsql.us-e
 const DSQL_REGION = process.env.DSQL_REGION ?? "us-east-1";
 
 async function createClient(): Promise<PrismaClient> {
-  const signer = new DsqlSigner({ hostname: DSQL_HOST, region: DSQL_REGION });
+  // On Vercel (or local dev): use explicit credentials from env vars
+  // On Amplify: no credentials needed — uses AmplifySSRCommuniqRole execution role
+  const signerOptions: Record<string, unknown> = { hostname: DSQL_HOST, region: DSQL_REGION };
+
+  const accessKeyId = process.env.COMMUNIQ_ACCESS_KEY_ID ?? process.env.AWS_ACCESS_KEY_ID_DSQL;
+  const secretAccessKey = process.env.COMMUNIQ_SECRET_ACCESS_KEY ?? process.env.AWS_SECRET_ACCESS_KEY_DSQL;
+
+  if (accessKeyId && secretAccessKey) {
+    signerOptions.credentials = { accessKeyId, secretAccessKey };
+  }
+
+  const signer = new DsqlSigner(signerOptions as ConstructorParameters<typeof DsqlSigner>[0]);
   const token = await signer.getDbConnectAdminAuthToken();
 
   const pool = new Pool({
