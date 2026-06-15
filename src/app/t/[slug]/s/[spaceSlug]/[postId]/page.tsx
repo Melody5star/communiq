@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { timeAgo } from "@/lib/timeAgo";
 import CommentSection from "./CommentSection";
 import UpvoteButton from "./UpvoteButton";
+import SignOutButton from "@/components/SignOutButton";
 
 export default async function PostDetail({
   params,
@@ -39,22 +40,25 @@ export default async function PostDetail({
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto flex items-center gap-2 text-sm">
-          <a href={`/t/${slug}`} className="flex items-center gap-2 shrink-0">
-            <div
-              className="w-6 h-6 rounded flex items-center justify-center text-white font-bold text-xs"
-              style={{ backgroundColor: tenant.primaryColor }}
-            >
-              {tenant.name[0].toUpperCase()}
-            </div>
-            <span className="font-medium text-gray-700 hidden sm:inline">{tenant.name}</span>
-          </a>
-          <span className="text-gray-300">/</span>
-          <a href={`/t/${slug}/s/${spaceSlug}`} className="text-gray-500 hover:text-indigo-600 font-medium">
-            # {post.space.name}
-          </a>
-          <span className="text-gray-300 hidden sm:inline">/</span>
-          <span className="text-gray-400 text-xs truncate hidden sm:inline max-w-[200px]">{post.title}</span>
+        <div className="max-w-3xl mx-auto flex items-center justify-between gap-2 text-sm">
+          <div className="flex items-center gap-2 min-w-0">
+            <a href={`/t/${slug}`} className="flex items-center gap-2 shrink-0">
+              <div
+                className="w-6 h-6 rounded flex items-center justify-center text-white font-bold text-xs"
+                style={{ backgroundColor: tenant.primaryColor }}
+              >
+                {tenant.name[0].toUpperCase()}
+              </div>
+              <span className="font-medium text-gray-700 hidden sm:inline">{tenant.name}</span>
+            </a>
+            <span className="text-gray-300">/</span>
+            <a href={`/t/${slug}/s/${spaceSlug}`} className="text-gray-500 hover:text-indigo-600 font-medium">
+              # {post.space.name}
+            </a>
+            <span className="text-gray-300 hidden sm:inline">/</span>
+            <span className="text-gray-400 text-xs truncate hidden sm:inline max-w-[200px]">{post.title}</span>
+          </div>
+          <SignOutButton />
         </div>
       </header>
 

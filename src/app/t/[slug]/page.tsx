@@ -3,6 +3,7 @@ import { getDb } from "@/lib/db";
 import { redirect } from "next/navigation";
 import CreateSpaceButton from "./CreateSpaceButton";
 import SearchBar from "./SearchBar";
+import SignOutButton from "@/components/SignOutButton";
 
 export default async function TenantHome({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -39,13 +40,14 @@ export default async function TenantHome({ params }: { params: Promise<{ slug: s
             </div>
             <span className="font-bold text-gray-900">{tenant.name}</span>
           </div>
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3">
             {session.user.role === "admin" && (
               <a href={`/t/${slug}/admin`} className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full hover:bg-indigo-100 transition-colors">
                 Admin ›
               </a>
             )}
-            <span className="text-sm text-gray-500 hidden sm:inline">{session.user.email}</span>
+            <span className="text-xs text-gray-400 hidden sm:inline max-w-[150px] truncate">{session.user.email}</span>
+            <SignOutButton />
           </div>
         </div>
       </header>

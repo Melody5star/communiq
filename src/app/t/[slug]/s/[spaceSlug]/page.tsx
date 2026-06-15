@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { timeAgo } from "@/lib/timeAgo";
+import SignOutButton from "@/components/SignOutButton";
 
 export default async function SpaceFeed({ params }: { params: Promise<{ slug: string; spaceSlug: string }> }) {
   const { slug, spaceSlug } = await params;
@@ -45,12 +46,15 @@ export default async function SpaceFeed({ params }: { params: Promise<{ slug: st
               <span className="text-xs text-gray-400 hidden md:inline truncate">{space.description}</span>
             )}
           </div>
-          <a
-            href={`/t/${slug}/s/${spaceSlug}/new`}
-            className="shrink-0 text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
-          >
-            + Post
-          </a>
+          <div className="flex items-center gap-2">
+            <SignOutButton />
+            <a
+              href={`/t/${slug}/s/${spaceSlug}/new`}
+              className="shrink-0 text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+            >
+              + Post
+            </a>
+          </div>
         </div>
       </header>
 
