@@ -1,6 +1,6 @@
 import type { NextAuthConfig } from "next-auth";
 
-const publicPaths = ["/login", "/onboarding", "/api/auth", "/api/onboarding"];
+const publicPaths = ["/login", "/onboarding", "/api/auth", "/api/onboarding", "/api/members"];
 
 export const authConfig: NextAuthConfig = {
   trustHost: true,
@@ -10,7 +10,8 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isPublic = publicPaths.some((p) => nextUrl.pathname.startsWith(p));
-      if (isPublic) return true;
+      const isJoinPage = nextUrl.pathname.endsWith("/join");
+      if (isPublic || isJoinPage) return true;
       return !!auth?.user;
     },
   },

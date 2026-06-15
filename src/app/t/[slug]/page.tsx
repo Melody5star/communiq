@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { redirect } from "next/navigation";
 import CreateSpaceButton from "./CreateSpaceButton";
+import SearchBar from "./SearchBar";
 
 export default async function TenantHome({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -27,10 +28,16 @@ export default async function TenantHome({ params }: { params: Promise<{ slug: s
           </div>
           <span className="font-semibold text-gray-900">{tenant.name}</span>
         </div>
-        <span className="text-sm text-gray-500">{session.user.email}</span>
+        <div className="flex items-center gap-3">
+          {session.user.role === "admin" && (
+            <a href={`/t/${slug}/admin`} className="text-xs text-gray-500 hover:text-indigo-600">Admin</a>
+          )}
+          <span className="text-sm text-gray-500">{session.user.email}</span>
+        </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-8">
+        <SearchBar tenantId={tenant.id} tenantSlug={slug} />
         <div className="grid grid-cols-3 gap-4 mb-8">
           {[{ n: memberCount, label: "Members" }, { n: postCount, label: "Posts" }, { n: spaces.length, label: "Spaces" }].map(({ n, label }) => (
             <div key={label} className="bg-white rounded-xl p-5 border border-gray-200">
