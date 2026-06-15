@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { redirect } from "next/navigation";
+import { timeAgo } from "@/lib/timeAgo";
 import CreateSpaceButton from "./CreateSpaceButton";
 import SearchBar from "./SearchBar";
 import SignOutButton from "@/components/SignOutButton";
@@ -14,13 +15,19 @@ export default async function TenantHome({ params }: { params: Promise<{ slug: s
   const tenant = await db.tenant.findFirst({ where: { slug } });
   if (!tenant) redirect("/login");
 
-  const [memberCount, postCount, spaces] = await Promise.all([
+  const [memberCount, postCount, spaces, recentPosts] = await Promise.all([
     db.member.count({ where: { tenantId: tenant.id } }),
     db.post.count({ where: { tenantId: tenant.id } }),
     db.space.findMany({
       where: { tenantId: tenant.id },
       include: { _count: { select: { posts: true } } },
       orderBy: { createdAt: "asc" },
+    }),
+    db.post.findMany({
+      where: { tenantId: tenant.id },
+      include: { author: true, space: true, _count: { select: { comments: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 5,
     }),
   ]);
 
@@ -112,6 +119,39 @@ export default async function TenantHome({ params }: { params: Promise<{ slug: s
             </ul>
           )}
         </div>
+
+        {/* Recent activity */}
+        {recentPosts.length > 0 && (
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+            <div className="px-5 py-4 border-b border-gray-100">
+              <h2 className="font-semibold text-gray-900">Recent Activity</h2>
+            </div>
+            <ul className="divide-y divide-gray-100">
+              {recentPosts.map((post) => (
+                <li key={post.id}>
+                  <a
+                    href={`/t/${slug}/s/${post.space.slug}/${post.id}`}
+                    className="flex items-start gap-3 px-5 py-3.5 hover:bg-indigo-50/40 transition-colors group"
+                  >
+                    <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-xs font-bold shrink-0 mt-0.5">
+                      {post.author.displayName[0].toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-800 truncate group-hover:text-indigo-700 transition-colors">{post.title}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {post.author.displayName} · <span className="text-indigo-400">#{post.space.name}</span> · {timeAgo(post.createdAt)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-400 shrink-0 mt-0.5">
+                      <span>▲ {post.upvotes}</span>
+                      <span>💬 {post._count.comments}</span>
+                    </div>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Invite section */}
         <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-3">
