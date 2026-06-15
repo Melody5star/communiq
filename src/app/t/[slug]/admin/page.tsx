@@ -1,6 +1,8 @@
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import CopyButton from "./CopyButton";
 
 export default async function AdminPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -21,7 +23,10 @@ export default async function AdminPage({ params }: { params: Promise<{ slug: st
     db.post.findMany({ where: { tenantId: tenant.id }, include: { author: true, space: true }, orderBy: { createdAt: "desc" }, take: 5 }),
   ]);
 
-  const joinLink = `${process.env.NEXTAUTH_URL}/t/${slug}/join`;
+  const headersList = await headers();
+  const host = headersList.get("host") ?? "localhost:3000";
+  const proto = host.includes("localhost") ? "http" : "https";
+  const joinLink = `${proto}://${host}/t/${slug}/join`;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -55,12 +60,7 @@ export default async function AdminPage({ params }: { params: Promise<{ slug: st
           <p className="text-xs text-indigo-600 mb-3">Share this link to let people join your community</p>
           <div className="flex items-center gap-2">
             <code className="flex-1 bg-white border border-indigo-200 rounded-lg px-3 py-2 text-sm text-indigo-700 truncate">{joinLink}</code>
-            <button
-              onClick={() => navigator.clipboard.writeText(joinLink)}
-              className="shrink-0 bg-indigo-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-indigo-700"
-            >
-              Copy
-            </button>
+            <CopyButton text={joinLink} />
           </div>
         </div>
 
