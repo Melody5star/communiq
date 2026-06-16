@@ -9,9 +9,10 @@ export const authConfig: NextAuthConfig = {
   providers: [],
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
+      const isRoot = nextUrl.pathname === "/";
       const isPublic = publicPaths.some((p) => nextUrl.pathname.startsWith(p));
       const isJoinPage = nextUrl.pathname.endsWith("/join");
-      if (isPublic || isJoinPage) return true;
+      if (isRoot || isPublic || isJoinPage) return true;
       return !!auth?.user;
     },
   },
