@@ -3,8 +3,8 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import { DsqlSigner, DsqlSignerConfig } from "@aws-sdk/dsql-signer";
 
-const DSQL_HOST = process.env.DSQL_HOST ?? "srt2xwnlrf5qxdg7ffcdxzkrum.dsql.us-east-1.on.aws";
-const DSQL_REGION = process.env.DSQL_REGION ?? "us-east-1";
+const DSQL_HOST = (process.env.DSQL_HOST ?? "srt2xwnlrf5qxdg7ffcdxzkrum.dsql.us-east-1.on.aws").trim();
+const DSQL_REGION = (process.env.DSQL_REGION ?? "us-east-1").trim();
 
 async function createClient(): Promise<PrismaClient> {
   // On Vercel (or local dev): use explicit credentials from env vars
