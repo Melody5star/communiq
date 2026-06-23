@@ -1,6 +1,6 @@
 import type { NextAuthConfig } from "next-auth";
 
-const publicPaths = ["/login", "/onboarding", "/api/auth", "/api/onboarding", "/api/members"];
+const publicPaths = ["/login", "/onboarding", "/api/auth", "/api/onboarding", "/api/members", "/api/healthz"];
 
 export const authConfig: NextAuthConfig = {
   trustHost: true,
