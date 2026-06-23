@@ -38,18 +38,18 @@ export async function GET() {
     });
 
     const client = await pool.connect();
-    const [ping, members, tenants] = await Promise.all([
+    const [ping, tables, searchPath] = await Promise.all([
       client.query("SELECT 1 as ok"),
-      client.query("SELECT email, display_name, role FROM members ORDER BY email LIMIT 30"),
-      client.query("SELECT slug, name FROM tenants"),
+      client.query("SELECT table_schema, table_name FROM information_schema.tables WHERE table_type='BASE TABLE' ORDER BY table_schema, table_name"),
+      client.query("SHOW search_path"),
     ]);
     client.release();
     await pool.end();
 
     info.dbConnected = true;
     info.ping = ping.rows[0];
-    info.tenants = tenants.rows;
-    info.members = members.rows;
+    info.searchPath = searchPath.rows[0];
+    info.tables = tables.rows;
 
     return NextResponse.json({ status: "ok", ...info });
   } catch (err) {
