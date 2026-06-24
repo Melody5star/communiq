@@ -1,36 +1,205 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CommuniQ
 
-## Getting Started
+**White-label community platform powered by AWS Aurora DSQL.**
 
-First, run the development server:
+> Built for the [AWS H0 Hackathon 2026](https://h0-hack-the-zero-stack-with-vercel-v0-and-aws-databases.devpost.com/) — Million-Scale Global App track.
+
+**Live demo:** https://communiq-self.vercel.app
+
+---
+
+## What it does
+
+CommuniQ lets any brand launch their own fully-branded community platform — think Circle.so or Mighty Networks, but running entirely on your AWS infrastructure.
+
+Each brand gets their own isolated community at `/t/your-brand` with:
+- **Spaces** — topic-based channels (General, Announcements, Introductions, etc.)
+- **Threaded posts** — discussions, upvotes, comments, nested replies
+- **Member management** — role-based access (admin / member), profiles, regions
+- **Admin dashboard** — manage members, spaces, and content
+- **Search** — full-text search across posts
+
+Two live communities to explore:
+- **Saathi** — https://communiq-self.vercel.app/t/saathi (AI & community platform)
+- **Builders Club** — https://communiq-self.vercel.app/t/buildersclub (indie hackers & founders)
+
+---
+
+## Why Aurora DSQL
+
+Every other community platform stores your data on their servers. CommuniQ runs entirely inside your AWS account.
+
+| Feature | Circle.so / Mighty Networks | CommuniQ |
+|---|---|---|
+| Your data on AWS | ❌ | ✅ |
+| IAM auth (no static passwords) | ❌ | ✅ |
+| Active-active multi-region | ❌ | ✅ |
+| Serverless scaling | ❌ | ✅ |
+| Flat monthly fee | $300–$999/mo | Pay per use |
+
+Aurora DSQL specifics:
+- **Active-active multi-region**: primary `us-east-1`, peer `us-west-2`, witness `us-east-2`
+- **IAM token auth**: `DsqlSigner` generates short-lived tokens — zero static DB passwords stored anywhere
+- **Serverless**: scales from 0 to millions with no cluster management
+
+---
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| Auth | NextAuth v5 beta — magic-link + JWT |
+| Database | AWS Aurora DSQL (PostgreSQL-compatible) |
+| ORM | Prisma 7 with `@prisma/adapter-pg` Driver Adapter |
+| Deployment | Vercel (primary) + AWS Amplify |
+| Language | TypeScript |
+
+---
+
+## Architecture
+
+```
+Browser
+  └── Vercel Edge (Next.js 16)
+        ├── proxy.ts          ← Edge-safe route protection (NextAuth v5)
+        ├── auth.ts           ← Node.js session resolution
+        ├── App Router pages  ← /t/[slug], /t/[slug]/s/[space]/[post]
+        └── API routes        ← /api/posts, /api/spaces, /api/members ...
+              └── src/lib/db.ts
+                    └── DsqlSigner → IAM token → pg Pool → PrismaPg → Aurora DSQL
+```
+
+### IAM token auth (no static passwords)
+
+```typescript
+// src/lib/db.ts
+const signerConfig: DsqlSignerConfig = { hostname: DSQL_HOST, region: DSQL_REGION };
+if (accessKeyId && secretAccessKey) {
+  signerConfig.credentials = { accessKeyId, secretAccessKey };
+}
+const signer = new DsqlSigner(signerConfig);
+const token = await signer.getDbConnectAdminAuthToken();
+// token used as PostgreSQL password — auto-rotates, never stored
+```
+
+### Prisma 7 Driver Adapter pattern
+
+```typescript
+const pool = new Pool({ host: DSQL_HOST, password: token, ssl: { rejectUnauthorized: false } });
+const adapter = new PrismaPg(pool);
+return new PrismaClient({ adapter });
+```
+
+### Multi-tenant isolation
+
+Every table has a `tenantId` foreign key. URL slug resolves to tenant — no cross-tenant data leakage possible.
+
+```
+/t/saathi       → Tenant { slug: "saathi" }
+/t/buildersclub → Tenant { slug: "buildersclub" }
+```
+
+---
+
+## Database schema
+
+13 models: `Tenant`, `Member`, `Space`, `Post`, `Comment`, `Reaction`, `Follow`, `Tag`, `PostTag`, `ModQueue`, `Notification`, `ActivityLog`
+
+See [`prisma/schema.prisma`](prisma/schema.prisma) and [`schema.sql`](schema.sql) for full definitions.
+
+---
+
+## Running locally
+
+### Prerequisites
+- Node.js 18+
+- An AWS Aurora DSQL cluster endpoint
+- AWS credentials with `dsql:DbConnectAdmin` permission
+
+### Setup
+
+```bash
+git clone https://github.com/Melody5star/communiq
+cd communiq
+npm install
+```
+
+### Environment variables
+
+Create a `.env` file:
+
+```env
+DSQL_HOST=your-cluster-id.dsql.us-east-1.on.aws
+DSQL_REGION=us-east-1
+COMMUNIQ_ACCESS_KEY_ID=your-aws-access-key
+COMMUNIQ_SECRET_ACCESS_KEY=your-aws-secret-key
+AUTH_SECRET=any-random-string-32-chars
+```
+
+### Generate Prisma client
+
+```bash
+npx prisma generate
+```
+
+### Run
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deploying to Vercel
 
-## Learn More
+1. Push to GitHub
+2. Import project at vercel.com/new
+3. Add the 5 environment variables in Vercel project settings
+4. Deploy
 
-To learn more about Next.js, take a look at the following resources:
+> **Note:** Use `printf` (not `echo`) when setting env vars via Vercel CLI to avoid trailing newlines causing Aurora DSQL token generation failures.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## API routes
 
-## Deploy on Vercel
+| Route | Method | Description |
+|---|---|---|
+| `/api/posts` | GET, POST | List / create posts |
+| `/api/comments` | GET, POST | List / create comments |
+| `/api/spaces` | GET, POST | List / create spaces |
+| `/api/members` | GET, POST | List / join community |
+| `/api/reactions` | POST | Upvote post or comment |
+| `/api/search` | GET | Full-text search across posts |
+| `/api/onboarding` | POST | Create new tenant + admin member |
+| `/api/auth/[...nextauth]` | ALL | NextAuth v5 handlers |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## AWS IAM permissions required
+
+```json
+{
+  "Effect": "Allow",
+  "Action": ["dsql:DbConnectAdmin"],
+  "Resource": "arn:aws:dsql:us-east-1:*:cluster/*"
+}
+```
+
+---
+
+## Hackathon
+
+- **Track:** Million-Scale Global App
+- **Live URL:** https://communiq-self.vercel.app
+- **Database:** AWS Aurora DSQL — cluster `communiq-prod`, region `us-east-1`
+- **Devpost:** https://devpost.com/software/communiq
+
+---
+
+## Author
+
+**Anamika Bajpai** — anamikabajpai1991@gmail.com
