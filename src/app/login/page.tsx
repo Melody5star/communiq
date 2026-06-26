@@ -21,7 +21,13 @@ export default function LoginPage() {
     if (result?.error) {
       setError("No account found with that email. Ask your community admin for an invite link.");
     } else {
-      router.push("/");
+      const res = await fetch("/api/auth/session");
+      const session = await res.json();
+      if (session?.user?.tenantSlug) {
+        router.push(`/t/${session.user.tenantSlug}`);
+      } else {
+        router.push("/");
+      }
     }
   }
 
